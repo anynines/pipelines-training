@@ -1,0 +1,146 @@
+---
+resources:
+- name: postgres-boshrelease
+  type: git
+  source:
+    branch: develop
+    uri: http://github.com/anynines/postgres-release-training-exercice
+- name: pipelines-utils
+  type: git
+  source:
+    branch: master
+    uri: http://github.com/anynines/pipelines-training
+- name: pull-request
+  type: pull-request
+  source:
+    base_branch: develop
+    repository: anynines/postgres-release-training-exercice
+    access_token: ((github-access-token))
+    #disable_forks: false
+    #required_review_approvals: 0
+    #skip_ssl_verification: true
+
+
+resource_types:
+- name: pull-request
+  type: docker-image
+  source:
+    repository: teliaoss/github-pr-resource
+
+jobs:
+- name: deploy-postgresql #should be trigger by PR anyway
+  plan:
+  - get: postgres-boshrelease
+  - get: pipelines-utils
+  - get: pull-request
+    trigger: true
+    resource: pull-request
+    version: every
+  - task: create-local-release
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: avarteqgmbh/pipeline-utils
+      inputs:
+      - name: postgres-boshrelease
+      - name: pipelines-utils
+      outputs:
+      - name: postgres-boshrelease
+      run:
+        path: pipelines-utils/create-local-release.sh # TODO: change name
+      params:
+        RELEASE_PATH: postgres-boshrelease
+        BOSH_ENVIRONMENT: ((bosh-environment))
+        BOSH_CLIENT: ((bosh-client))
+        BOSH_CLIENT_SECRET:  ((bosh-client-secret))
+        BOSH_CA_CERT: ((bosh-ca-cert))
+  - task: deploy-postgres
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: avarteqgmbh/pipeline-utils
+      inputs:
+      - name: postgres-boshrelease
+      - name: pipelines-utils
+      outputs:
+      - name: postgres-boshrelease
+      run:
+        path: pipelines-utils/deploy-release.sh
+      params:
+        RELEASE_PATH: postgres-boshrelease
+        BOSH_ENVIRONMENT: ((bosh-environment))
+        BOSH_CLIENT: ((bosh-client))
+        BOSH_CLIENT_SECRET:  ((bosh-client-secret))
+        BOSH_CA_CERT: ((bosh-ca-cert))
+  - task: populate-database-postgresql
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: avarteqgmbh/pipeline-utils
+      inputs:
+      - name: postgres-boshrelease
+      - name: pipelines-utils
+      outputs:
+      - name: postgres-boshrelease
+      run:
+        path: pipelines-utils/run-errand.sh
+      params:
+        RELEASE_PATH: postgres-boshrelease
+        BOSH_ENVIRONMENT: ((bosh-environment))
+        BOSH_CLIENT: ((bosh-client))
+        BOSH_CLIENT_SECRET:  ((bosh-client-secret))
+        BOSH_CA_CERT: ((bosh-ca-cert))
+- name: test-a9s-kubernetes
+  serial: true
+  plan:
+  - in_parallel:
+    - get: pull-request
+      trigger: true
+      passed:
+      - deploy-postgresql
+  - put: pull-request
+    params:
+      context: quick-test
+      path: pull-request
+      status: pending
+  - task: quick-test
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: avarteqgmbh/pipeline-utils
+      run:
+        path: pull-request/scripts/test-the-release.sh
+        args:
+        - postgres
+        - bosh-lite
+      params:
+        BOSH_ENVIRONMENT: ((bosh-environment))
+        BOSH_CLIENT: ((bosh-client))
+        BOSH_CLIENT_SECRET:  ((bosh-client-secret))
+        BOSH_CA_CERT: ((bosh-ca-cert))
+        CREDHUB_SERVER: ((credhub-server))
+        CREDHUB_CA_CERT: ((credhub-ca-cert))
+        CREDHUB_CLIENT: ((credhub-client))
+        CREDHUB_SECRET: ((credhub-secret))
+      inputs:
+      - name: pull-request
+    on_failure:
+      put: pull-request
+      params:
+        context: quick-test
+        path: pull-request
+        status: failure
+    on_success:
+      put: pull-request
+      params:
+        context: quick-test
+        path: pull-request
+        status: success
