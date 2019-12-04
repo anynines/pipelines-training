@@ -9,17 +9,13 @@ resources:
   type: git
   source:
     branch: master
-    uri: http://github.com/anynines/pipelines-training
+    uri: git@github.com:anynines/pipelines-training.git
 - name: pull-request
   type: pull-request
   source:
     base_branch: develop
     repository: anynines/postgres-release-training-exercice
     access_token: ((github-access-token))
-    #disable_forks: false
-    #required_review_approvals: 0
-    #skip_ssl_verification: true
-
 
 resource_types:
 - name: pull-request
@@ -28,7 +24,7 @@ resource_types:
     repository: teliaoss/github-pr-resource
 
 jobs:
-- name: deploy-postgresql #should be trigger by PR anyway
+- name: deploy-postgresql
   plan:
   - get: postgres-boshrelease
   - get: pipelines-utils
@@ -49,7 +45,7 @@ jobs:
       outputs:
       - name: postgres-boshrelease
       run:
-        path: pipelines-utils/create-local-release.sh # TODO: change name
+        path: pipelines-utils/create-release.sh
       params:
         RELEASE_PATH: postgres-boshrelease
         BOSH_ENVIRONMENT: ((bosh-environment))
@@ -102,6 +98,7 @@ jobs:
   - in_parallel:
     - get: pull-request
       trigger: true
+      resource: pr
       passed:
       - deploy-postgresql
   - put: pull-request
@@ -117,19 +114,13 @@ jobs:
         source:
           repository: avarteqgmbh/pipeline-utils
       run:
-        path: pull-request/scripts/test-the-release.sh
-        args:
-        - postgres
-        - bosh-lite
+        path: pr/scripts/test-the-release.sh
+        args: ["postgres bosh-lite"]
       params:
         BOSH_ENVIRONMENT: ((bosh-environment))
         BOSH_CLIENT: ((bosh-client))
         BOSH_CLIENT_SECRET:  ((bosh-client-secret))
         BOSH_CA_CERT: ((bosh-ca-cert))
-        CREDHUB_SERVER: ((credhub-server))
-        CREDHUB_CA_CERT: ((credhub-ca-cert))
-        CREDHUB_CLIENT: ((credhub-client))
-        CREDHUB_SECRET: ((credhub-secret))
       inputs:
       - name: pull-request
     on_failure:

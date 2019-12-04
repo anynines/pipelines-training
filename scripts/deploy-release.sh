@@ -8,5 +8,4 @@ set -o pipefail
 cd ${RELEASE_PATH}
 bosh --non-interactive deploy templates/postgres.yml \
   -o templates/operations/set_properties.yml \
-  -o templates/operations/populate-database.yml \
   -d postgres
