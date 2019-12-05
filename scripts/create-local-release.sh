@@ -6,5 +6,5 @@ set -o pipefail
 [ "${EXTENDED_LOGS:-false}" = "true" ] &&  set -o xtrace # Print command traces before executing command
 
 cd ${RELEASE_PATH}
-bosh create-release --timestamp-version
+bosh create-release --force --timestamp-version
 bosh upload-release

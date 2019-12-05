@@ -1,1 +1,3 @@
 vars.yml
+scripts/load_training_env.sh
+scripts/whole-training.sh
