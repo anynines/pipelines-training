@@ -53,13 +53,13 @@ jobs:
         BOSH_CLIENT_SECRET:  ((bosh-client-secret))
         BOSH_CA_CERT: ((bosh-ca-cert))
   - task: deploy-postgres
-    file: pipeline-utils/tasks/deploy-release.yml
+    file: pipelines-utils/tasks/deploy-release.yml
     input_mapping:
       boshrelease: postgres-boshrelease
     output_mapping:
       boshrelease: postgres-boshrelease
     params:
-      RELEASE_PATH: postgres-boshrelease
+      RELEASE_PATH: boshrelease
       BOSH_ENVIRONMENT: ((bosh-environment))
       BOSH_CLIENT: ((bosh-client))
       BOSH_CLIENT_SECRET:  ((bosh-client-secret))
