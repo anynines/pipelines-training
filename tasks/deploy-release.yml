@@ -14,7 +14,7 @@ outputs:
 - name: boshrelease
 
 run:
-  path: pipelines-utils/deploy-release.sh
+  path: pipelines-utils/scripts/deploy-release.sh
   args: ["populate-database"]
 
 params:
