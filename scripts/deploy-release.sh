@@ -10,9 +10,13 @@ if [ "${1-}" = "populate-database" ]; then
   bosh --non-interactive deploy templates/postgres.yml \
     -o templates/operations/set_properties.yml \
     -o templates/operations/populate-database.yml \
-    -d postgres
+    -o templates/operations/overwrite-deployment-name.yml \
+    -v deployment-name=${DEPLOYMENT_NAME} \
+    -d ${DEPLOYMENT_NAME}
 else
   bosh --non-interactive deploy templates/postgres.yml \
     -o templates/operations/set_properties.yml \
-    -d postgres
+    -o templates/operations/overwrite-deployment-name.yml \
+    -v deployment-name=${DEPLOYMENT_NAME} \
+    -d ${DEPLOYMENT_NAME}
 fi

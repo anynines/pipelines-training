@@ -6,4 +6,4 @@ set -o pipefail
 [ "${EXTENDED_LOGS:-false}" = "true" ] &&  set -o xtrace # Print command traces before executing command
 
 cd ${RELEASE_PATH}
-bosh run-errand populate-database -d postgres
+bosh run-errand populate-database -d ${DEPLOYMENT_NAME}

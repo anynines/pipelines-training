@@ -60,6 +60,7 @@ jobs:
       BOSH_CLIENT: ((bosh-client))
       BOSH_CLIENT_SECRET:  ((bosh-client-secret))
       BOSH_CA_CERT: ((bosh-ca-cert))
+      DEPLOYMENT_NAME: ((deployment-name))
   - task: populate-database-postgresql
     config:
       platform: linux
@@ -80,6 +81,7 @@ jobs:
         BOSH_CLIENT: ((bosh-client))
         BOSH_CLIENT_SECRET:  ((bosh-client-secret))
         BOSH_CA_CERT: ((bosh-ca-cert))
+        DEPLOYMENT_NAME: ((deployment-name))
 - name: test-a9s-kubernetes
   serial: true
   plan:
@@ -103,7 +105,7 @@ jobs:
           repository: avarteqgmbh/pipeline-utils
       run:
         path: pr/scripts/test-the-release.sh
-        args: ["postgres bosh-lite"]
+        args: ["((deployment-name)) bosh-lite"]
       params:
         BOSH_ENVIRONMENT: ((bosh-environment))
         BOSH_CLIENT: ((bosh-client))
