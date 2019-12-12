@@ -7,4 +7,4 @@ set -o pipefail
 
 cd ${RELEASE_PATH}
 bosh create-release --force --timestamp-version
-bosh upload-release
+#bosh upload-release
